@@ -71,10 +71,10 @@
     </style>
     <div class='body'>
       <div class='container'>
-        <input type="radio" name="tabs" id="tab1" checked />
         <label for="tab1">Tab1</label>
-        <input type="radio" name="tabs" id="tab2" />
+        <input type="radio" name="tabs" id="tab1" checked />
         <label for="tab2">Tab2</label>
+        <input type="radio" name="tabs" id="tab2" />
 
         <div class="tab content1">Tab1 Contents</div>
         <div class="tab content2">Tab2 Contents</div>
