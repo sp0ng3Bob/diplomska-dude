@@ -1,18 +1,30 @@
+<style>
+
+.red {
+color: red;
+}
+
+h1 {
+color: blue;
+}
+
+</style>
+
+# Site map: {.red}
+
+
 ## Aplications:
 <details>
-  <summary>App trunk</summary>
-  ### You can add a header
-
-  You can add text within a collapsed section. 
-  
-  You can add an image or a code block, too.
-  
-  ```ruby
-     puts "Hello World"
-  ```
+<summary>App trunk</summary>
 </details>
 
 ## Notes
+
 <details>
-  <summary>**Computer notes**</summary>
+<summary>
+**Computer notes**
+</summary>
+
+### lol
+
 </details>
