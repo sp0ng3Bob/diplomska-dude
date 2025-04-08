@@ -1,30 +1,24 @@
-<style>
+# Site map:
 
-.red {
-color: red;
-}
-
-h1 {
-color: blue;
-}
-
-</style>
-
-# Site map: {.red}
-
+**HELLO**
 
 ## Aplications:
-<details>
-<summary>App trunk</summary>
+<details><summary>App trunk</summary>
+  
+**bla bla bla**  
 </details>
 
 ## Notes
 
-<details>
-<summary>
-**Computer notes**
-</summary>
+<details open><summary><em>Shopping list</em></summary>
+  
+* Vegetables
+* Fruits
+* Fish
+</details>
 
 ### lol
 
-</details>
+<div class="i"> **HELLO** <span>**yo**</span></div>
+
+[link *foo **bar** `#`*](/uri)
