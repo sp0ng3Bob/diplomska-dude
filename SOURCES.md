@@ -14,6 +14,7 @@
 
 ## All types
  - http://datamoshing.com/
+ - http://databending.org/
 
 ## Images
  - https://eclecticlight.co/2020/04/21/file-integrity-6-which-image-format-is-most-resilient/
