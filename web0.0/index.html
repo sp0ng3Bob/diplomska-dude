@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glitch Art Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            min-height: 600px;
+        }
+
+        .canvas-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-comparison {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .canvas-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #originalCanvas, #glitchCanvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            position: absolute;
+        }
+
+        #glitchCanvas {
+            clip-path: polygon(50% 0%, 100% 0%, 100% 100%, 50% 100%);
+            transition: clip-path 0.1s ease;
+        }
+
+        .slider-container {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 4px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            cursor: col-resize;
+            z-index: 10;
+            transform: translateX(-50%);
+        }
+
+        .slider-handle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .upload-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin-bottom: 10px;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .controls-header h3 {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .toggle-icon {
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .controls-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .controls-content.collapsed {
+            max-height: 0;
+        }
+
+        .controls-content.expanded {
+            max-height: 800px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            margin-bottom: 5px;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            cursor: pointer;
+            border: none;
+        }
+
+        .value-display {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            text-align: right;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #4ecdc4;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: transform 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+        }
+
+        .placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .placeholder-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .canvas-container.drag-over {
+            border: 2px dashed #4ecdc4;
+            background: rgba(78, 205, 196, 0.1);
+        }
+
+        .canvas-container.drag-over .placeholder {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        .canvas-container.drag-over .placeholder-icon {
+            transform: scale(1.2);
+        }
+
+        .drop-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .drop-zone.active {
+            pointer-events: all;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .controls-panel {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Glitch Art Generator</h1>
+            <p>Transform your images with digital chaos</p>
+        </div>
+
+        <div class="main-content">
+            <div class="canvas-container">
+                <div class="image-comparison">
+                    <div class="drop-zone" id="dropZone"></div>
+                    <div class="placeholder" id="placeholder">
+                        <div class="placeholder-icon">🖼️</div>
+                        <p>Upload an image to get started</p>
+                        <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 10px;">
+                            Click upload button or drag & drop an image here
+                        </p>
+                    </div>
+                    <div class="canvas-wrapper" id="canvasWrapper" style="display: none;">
+                        <canvas id="originalCanvas"></canvas>
+                        <canvas id="glitchCanvas"></canvas>
+                        <div class="slider-container" id="comparisonSlider">
+                            <div class="slider-handle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <div class="upload-section">
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                        📁 Upload Image
+                    </button>
+                    <input type="file" id="fileInput" class="file-input" accept="image/*">
+                </div>
+
+                <div class="controls-header" onclick="toggleControls()">
+                    <h3>Glitch Settings</h3>
+                    <span class="toggle-icon" id="toggleIcon">▼</span>
+                </div>
+
+                <div class="controls-content expanded" id="controlsContent">
+                    <div class="control-group">
+                        <label for="intensity">Intensity</label>
+                        <input type="range" id="intensity" class="slider" min="0" max="100" value="50">
+                        <div class="value-display" id="intensityValue">50</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="pixelShift">Pixel Shift</label>
+                        <input type="range" id="pixelShift" class="slider" min="0" max="50" value="0">
+                        <div class="value-display" id="pixelShiftValue">0</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="colorOffset">Color Offset</label>
+                        <input type="range" id="colorOffset" class="slider" min="0" max="20" value="0">
+                        <div class="value-display" id="colorOffsetValue">0</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="scanlines">Scanlines</label>
+                        <input type="range" id="scanlines" class="slider" min="0" max="10" value="0">
+                        <div class="value-display" id="scanlinesValue">0</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="noise">Noise</label>
+                        <input type="range" id="noise" class="slider" min="0" max="100" value="0">
+                        <div class="value-display" id="noiseValue">0</div>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="rgbShift" class="checkbox" checked>
+                            <label for="rgbShift">RGB Shift</label>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="digitalDistortion" class="checkbox">
+                            <label for="digitalDistortion">Digital Distortion</label>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" onclick="resetSettings()">Reset</button>
+                        <button class="btn btn-primary" onclick="downloadImage()">Download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let originalImage = null;
+        let originalCanvas = document.getElementById('originalCanvas');
+        let glitchCanvas = document.getElementById('glitchCanvas');
+        let originalCtx = originalCanvas.getContext('2d');
+        let glitchCtx = glitchCanvas.getContext('2d');
+        let isDragging = false;
+
+        // File upload handling
+        document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+
+        // ==================== DRAG AND DROP FUNCTIONALITY ====================
+        const canvasContainer = document.querySelector('.canvas-container');
+        const dropZone = document.getElementById('dropZone');
+
+        // Prevent default drag behaviors on the entire document
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.addEventListener(eventName, preventDefaults, false);
+            canvasContainer.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop area when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            canvasContainer.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            canvasContainer.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            canvasContainer.classList.add('drag-over');
+            dropZone.classList.add('active');
+        }
+
+        function unhighlight(e) {
+            canvasContainer.classList.remove('drag-over');
+            dropZone.classList.remove('active');
+        }
+
+        // Handle dropped files
+        canvasContainer.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    processImageFile(file);
+                } else {
+                    alert('Please drop an image file (JPG, PNG, GIF, etc.)');
+                }
+            }
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            processImageFile(file);
+        }
+
+        function processImageFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    originalImage = img;
+                    setupCanvases();
+                    document.getElementById('placeholder').style.display = 'none';
+                    document.getElementById('canvasWrapper').style.display = 'block';
+                    applyGlitch();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function setupCanvases() {
+            const container = document.querySelector('.image-comparison');
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            const aspectRatio = originalImage.width / originalImage.height;
+            let canvasWidth, canvasHeight;
+            
+            if (aspectRatio > containerWidth / containerHeight) {
+                canvasWidth = containerWidth;
+                canvasHeight = containerWidth / aspectRatio;
+            } else {
+                canvasHeight = containerHeight;
+                canvasWidth = containerHeight * aspectRatio;
+            }
+            
+            originalCanvas.width = canvasWidth;
+            originalCanvas.height = canvasHeight;
+            glitchCanvas.width = canvasWidth;
+            glitchCanvas.height = canvasHeight;
+            
+            originalCtx.drawImage(originalImage, 0, 0, canvasWidth, canvasHeight);
+        }
+
+        // Comparison slider
+        let comparisonSlider = document.getElementById('comparisonSlider');
+        let sliderPosition = 50;
+
+        comparisonSlider.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', stopDrag);
+
+        function startDrag(e) {
+            isDragging = true;
+            updateSliderPosition(e);
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            updateSliderPosition(e);
+        }
+
+        function stopDrag() {
+            isDragging = false;
+        }
+
+        function updateSliderPosition(e) {
+            const container = document.querySelector('.image-comparison');
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            sliderPosition = Math.max(0, Math.min(100, (x / rect.width) * 100));
+            
+            comparisonSlider.style.left = sliderPosition + '%';
+            glitchCanvas.style.clipPath = `polygon(${sliderPosition}% 0%, 100% 0%, 100% 100%, ${sliderPosition}% 100%)`;
+        }
+
+        // Controls
+        function toggleControls() {
+            const content = document.getElementById('controlsContent');
+            const icon = document.getElementById('toggleIcon');
+            
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                content.classList.add('collapsed');
+                icon.textContent = '▶';
+            } else {
+                content.classList.remove('collapsed');
+                content.classList.add('expanded');
+                icon.textContent = '▼';
+            }
+        }
+
+        // Value display updates
+        document.getElementById('intensity').addEventListener('input', function() {
+            document.getElementById('intensityValue').textContent = this.value;
+            applyGlitch();
+        });
+
+        document.getElementById('pixelShift').addEventListener('input', function() {
+            document.getElementById('pixelShiftValue').textContent = this.value;
+            applyGlitch();
+        });
+
+        document.getElementById('colorOffset').addEventListener('input', function() {
+            document.getElementById('colorOffsetValue').textContent = this.value;
+            applyGlitch();
+        });
+
+        document.getElementById('scanlines').addEventListener('input', function() {
+            document.getElementById('scanlinesValue').textContent = this.value;
+            applyGlitch();
+        });
+
+        document.getElementById('noise').addEventListener('input', function() {
+            document.getElementById('noiseValue').textContent = this.value;
+            applyGlitch();
+        });
+
+        document.getElementById('rgbShift').addEventListener('change', applyGlitch);
+        document.getElementById('digitalDistortion').addEventListener('change', applyGlitch);
+
+        // Glitch effects
+        function applyGlitch() {
+            if (!originalImage) return;
+
+            const intensity = parseInt(document.getElementById('intensity').value);
+            const pixelShift = parseInt(document.getElementById('pixelShift').value);
+            const colorOffset = parseInt(document.getElementById('colorOffset').value);
+            const scanlines = parseInt(document.getElementById('scanlines').value);
+            const noise = parseInt(document.getElementById('noise').value);
+            const rgbShift = document.getElementById('rgbShift').checked;
+            const digitalDistortion = document.getElementById('digitalDistortion').checked;
+
+            // Clear and redraw original
+            glitchCtx.clearRect(0, 0, glitchCanvas.width, glitchCanvas.height);
+            glitchCtx.drawImage(originalImage, 0, 0, glitchCanvas.width, glitchCanvas.height);
+
+            // Get image data
+            const imageData = glitchCtx.getImageData(0, 0, glitchCanvas.width, glitchCanvas.height);
+            const data = imageData.data;
+
+            // Apply effects
+            if (rgbShift) applyRGBShift(data, glitchCanvas.width, glitchCanvas.height, colorOffset);
+            if (digitalDistortion) applyDigitalDistortion(data, glitchCanvas.width, glitchCanvas.height, pixelShift);
+            if (noise > 0) applyNoise(data, noise);
+            if (scanlines > 0) applyScanlines(data, glitchCanvas.width, glitchCanvas.height, scanlines);
+            if (intensity > 0) applyIntensity(data, intensity);
+
+            glitchCtx.putImageData(imageData, 0, 0);
+        }
+
+        function applyRGBShift(data, width, height, offset) {
+            const tempData = new Uint8ClampedArray(data);
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const i = (y * width + x) * 4;
+                    
+                    // Shift red channel
+                    const redX = Math.min(width - 1, x + offset);
+                    const redI = (y * width + redX) * 4;
+                    data[i] = tempData[redI];
+                    
+                    // Shift blue channel
+                    const blueX = Math.max(0, x - offset);
+                    const blueI = (y * width + blueX) * 4;
+                    data[i + 2] = tempData[blueI + 2];
+                }
+            }
+        }
+
+        function applyDigitalDistortion(data, width, height, shift) {
+            if (Math.random() > 0.5) return;
+            
+            const startY = Math.floor(Math.random() * height);
+            const endY = Math.min(height, startY + Math.floor(Math.random() * 50));
+            
+            for (let y = startY; y < endY; y++) {
+                const offset = Math.floor((Math.random() - 0.5) * shift) * 4;
+                for (let x = 0; x < width; x++) {
+                    const i = (y * width + x) * 4;
+                    const srcX = Math.max(0, Math.min(width - 1, x + offset / 4));
+                    const srcI = (y * width + srcX) * 4;
+                    
+                    data[i] = data[srcI];
+                    data[i + 1] = data[srcI + 1];
+                    data[i + 2] = data[srcI + 2];
+                }
+            }
+        }
+
+        function applyNoise(data, intensity) {
+            for (let i = 0; i < data.length; i += 4) {
+                if (Math.random() < intensity / 1000) {
+                    const noise = Math.random() * 255;
+                    data[i] = noise;
+                    data[i + 1] = noise;
+                    data[i + 2] = noise;
+                }
+            }
+        }
+
+        function applyScanlines(data, width, height, intensity) {
+            for (let y = 0; y < height; y += Math.floor(10 / intensity)) {
+                for (let x = 0; x < width; x++) {
+                    const i = (y * width + x) * 4;
+                    data[i] *= 0.5;
+                    data[i + 1] *= 0.5;
+                    data[i + 2] *= 0.5;
+                }
+            }
+        }
+
+        function applyIntensity(data, intensity) {
+            const factor = intensity / 50;
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.min(255, data[i] * factor);
+                data[i + 1] = Math.min(255, data[i + 1] * factor);
+                data[i + 2] = Math.min(255, data[i + 2] * factor);
+            }
+        }
+
+        function resetSettings() {
+            document.getElementById('intensity').value = 50;
+            document.getElementById('pixelShift').value = 10;
+            document.getElementById('colorOffset').value = 5;
+            document.getElementById('scanlines').value = 3;
+            document.getElementById('noise').value = 20;
+            document.getElementById('rgbShift').checked = true;
+            document.getElementById('digitalDistortion').checked = false;
+            
+            // Update displays
+            document.getElementById('intensityValue').textContent = '50';
+            document.getElementById('pixelShiftValue').textContent = '10';
+            document.getElementById('colorOffsetValue').textContent = '5';
+            document.getElementById('scanlinesValue').textContent = '3';
+            document.getElementById('noiseValue').textContent = '20';
+            
+            applyGlitch();
+        }
+
+        function downloadImage() {
+            if (!originalImage) return;
+            
+            const link = document.createElement('a');
+            link.download = 'glitch-art.jpg';
+            link.href = glitchCanvas.toDataURL('image/jpeg', 0.9);
+            link.click();
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (originalImage) {
+                setupCanvases();
+                applyGlitch();
+            }
+        });
+
+        // ==================== ADDITIONAL ADVANCED GLITCH EFFECTS ====================
+        
+        function applyDataMoshing(data, width, height) {
+            // Simulate data corruption/moshing effect
+            const numBlocks = Math.floor(Math.random() * 10) + 5;
+            
+            for (let b = 0; b < numBlocks; b++) {
+                const blockX = Math.floor(Math.random() * width);
+                const blockY = Math.floor(Math.random() * height);
+                const blockW = Math.floor(Math.random() * 50) + 20;
+                const blockH = Math.floor(Math.random() * 50) + 20;
+                
+                // Copy a random block to another location
+                const sourceX = Math.floor(Math.random() * (width - blockW));
+                const sourceY = Math.floor(Math.random() * (height - blockH));
+                
+                for (let y = 0; y < blockH && blockY + y < height; y++) {
+                    for (let x = 0; x < blockW && blockX + x < width; x++) {
+                        const destI = ((blockY + y) * width + (blockX + x)) * 4;
+                        const srcI = ((sourceY + y) * width + (sourceX + x)) * 4;
+                        
+                        if (srcI < data.length && destI < data.length) {
+                            data[destI] = data[srcI];
+                            data[destI + 1] = data[srcI + 1];
+                            data[destI + 2] = data[srcI + 2];
+                        }
+                    }
+                }
+            }
+        }
+        
+        function applyChannelMixing(data) {
+            // Mix RGB channels in interesting ways
+            for (let i = 0; i < data.length; i += 4) {
+                if (Math.random() < 0.1) { // Apply to 10% of pixels
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    // Various channel mixing modes
+                    const mixMode = Math.floor(Math.random() * 4);
+                    switch (mixMode) {
+                        case 0: // Swap red and blue
+                            data[i] = b;
+                            data[i + 2] = r;
+                            break;
+                        case 1: // Invert one channel
+                            data[i + 1] = 255 - g;
+                            break;
+                        case 2: // Blend channels
+                            data[i] = Math.floor((r + g) / 2);
+                            data[i + 1] = Math.floor((g + b) / 2);
+                            data[i + 2] = Math.floor((b + r) / 2);
+                            break;
+                        case 3: // Extreme contrast
+                            data[i] = r > 128 ? 255 : 0;
+                            data[i + 1] = g > 128 ? 255 : 0;
+                            data[i + 2] = b > 128 ? 255 : 0;
+                            break;
+                    }
+                }
+            }
+        }
+        
+        function applyOverflow(data) {
+            // Simulate digital overflow/wraparound
+            for (let i = 0; i < data.length; i += 4) {
+                if (Math.random() < 0.05) { // 5% chance per pixel
+                    data[i] = (data[i] + 128) % 256;
+                    data[i + 1] = (data[i + 1] + 128) % 256;
+                    data[i + 2] = (data[i + 2] + 128) % 256;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
